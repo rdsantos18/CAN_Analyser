@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "can.h"
+#include "dma.h"
 #include "fatfs.h"
 #include "i2c.h"
 #include "rtc.h"
@@ -126,6 +127,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_CAN1_Init();
   MX_CAN2_Init();
   MX_RTC_Init();
@@ -140,7 +142,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   reg_wizchip_cs_cbfunc(cs_sel, cs_desel);
   reg_wizchip_spi_cbfunc(spi_rb, spi_wb);
-  reg_wizchip_spiburst_cbfunc(spi_rb_burst, spi_wb_burst);
+  //reg_wizchip_spiburst_cbfunc(spi_rb_burst, spi_wb_burst);
   //reg_wizchip_cris_cbfunc(vPortEnterCritical, vPortExitCritical);
 
   wizchip_init(bufSize, bufSize);
@@ -163,6 +165,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+
 	  if(HAL_GetTick() - timer_led > 100) {
 		  timer_led = HAL_GetTick();
 		  HAL_GPIO_TogglePin(LED_INT_GPIO_Port, LED_INT_Pin);
@@ -171,7 +176,6 @@ int main(void)
 	  for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
 		  httpServer_run(i); 	// HTTP Server handler
 	  }
-    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
