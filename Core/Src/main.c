@@ -251,14 +251,14 @@ void spi_wb(uint8_t b)
 
 void spi_rb_burst(uint8_t *buf, uint16_t len)
 {
-//  HAL_SPI_Receive_DMA(&hspi1, buf, len);
-//  while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_RX);
+  HAL_SPI_Receive_DMA(&hspi1, buf, len);
+  while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_RX);
 }
 
 void spi_wb_burst(uint8_t *buf, uint16_t len)
 {
-//  HAL_SPI_Transmit_DMA(&hspi1, buf, len);
-//  while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_TX);
+  HAL_SPI_Transmit_DMA(&hspi1, buf, len);
+  while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_TX);
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
