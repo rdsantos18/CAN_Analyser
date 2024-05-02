@@ -87,7 +87,8 @@ FATFS *pfs;
 FRESULT fr;     /* FatFs return code */
 DWORD fre_clust;
 uint32_t totalSpace, freeSpace, SpaceUsed;
-static uint8_t buffer[_MAX_SS]; /* a work buffer for the f_mkfs() */
+//static uint8_t buffer[_MAX_SS]; /* a work buffer for the f_mkfs() */
+extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -232,9 +233,16 @@ int main(void)
 				gTime.Hours, gTime.Minutes, gTime.Seconds, gTime.SubSeconds);
 	  }
 	  // HTTP
-	 // for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
-	//	  httpServer_run(i); 	// HTTP Server handler
-	//  }
+	  for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
+		  httpServer_run(i); 	// HTTP Server handler
+	  }
+
+	  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
+		  //logI("Cable USB Connected\n\r");
+	  }
+	  else {
+		  //logI("Cable USB Not Connected\n\r");
+	  }
   }
   /* USER CODE END 3 */
 }
