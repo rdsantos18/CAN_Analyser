@@ -18,6 +18,7 @@ void HAL_printf_valist(const char *fmt, va_list argp)
 {
 	if (vsprintf(string_usb, fmt, argp) > 0) {
 		//CDC_Transmit_FS((uint8_t*)string_usb, strlen(string_usb));				// send message via USB CDC
+		//while(CDC_Transmit_FS((uint8_t*)string_usb, strlen(string_usb)) == USBD_BUSY);
 		HAL_UART_Transmit(&huart1, (uint8_t *)string_usb, strlen(string_usb), 1000);
 	}
 }

@@ -35,6 +35,7 @@
 #include "socket.h"
 #include "httpServer.h"
 #include "log.h"
+#include "fatfs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -80,6 +81,8 @@ uint8_t Flag_CAN_2 = 0;
 RTC_TimeTypeDef gTime = {0};
 RTC_DateTypeDef gDate = {0};
 
+char SDPath[4];   /* SD logical drive path */
+FATFS SDFatFS;    /* File system object for SD logical drive */
 FATFS *pfs;
 FRESULT fr;     /* FatFs return code */
 DWORD fre_clust;
@@ -147,7 +150,7 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_FATFS_Init();
+  //MX_FATFS_Init();
   MX_USB_DEVICE_Init();
   MX_I2C1_Init();
   MX_USART3_UART_Init();
@@ -172,34 +175,36 @@ int main(void)
   reg_httpServer_cbfunc(NVIC_SystemReset, NULL);
 
   logI("Init CAN ANALYSER STM32 v1.0.0\n\r");
-  // Mount SD CARD
-  fr = f_mount(&SDFatFS, "", 0);
-  if(fr != FR_OK){
-	  logI("STM32 FatFs - GetMount ERROR...\n\r");
-  }
-  else {
-	  logI("STM32 FatFs - GetMount OK...\n\r");
-  }
+  if (FATFS_LinkDriver(&SD_Driver, SDPath) == 0) {
+	  // Mount SD CARD
+	  fr = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
+	  if(fr != FR_OK){
+		  logI("STM32 FatFs - GetMount ERROR...\n\r");
+	  }
+	  else {
+		  logI("STM32 FatFs - GetMount OK...\n\r");
+	  }
 
-  fr = f_mkfs("", FM_ANY, 0, buffer, sizeof(buffer));
-  if(fr != FR_OK){
-	  logI("STM32 FatFs - Mkfs ERROR...\n\r");
-  }
-  else {
-	  logI("STM32 FatFs - Mkfs OK...\n\r");
-  }
+//	  fr = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, buffer, sizeof(buffer));
+//	  if(fr != FR_OK){
+//		  logI("STM32 FatFs - Mkfs ERROR...\n\r");
+//	  }
+//	  else {
+//		  logI("STM32 FatFs - Mkfs OK...\n\r");
+//	  }
 
-  // Check freeSpace space
-  fr = f_getfree("", &fre_clust, &pfs);
-  if(fr != FR_OK){
-	  logI("STM32 FatFs - GetFree ERROR...\n\r");
-  }
-  else {
-	  logI("STM32 FatFs - GetFree OK...\n\r");
-	  totalSpace = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
-	  freeSpace = (uint32_t)(fre_clust * pfs->csize * 0.5);
-	  SpaceUsed = totalSpace - freeSpace;
-	  logI("Total Space: %ld , SpeceUsed: %ld , FreeSpace: %ld \n\r", totalSpace, SpaceUsed, freeSpace);
+	  // Check freeSpace space
+	  fr = f_getfree("", &fre_clust, &pfs);
+	  if(fr != FR_OK){
+		  logI("STM32 FatFs - GetFree ERROR...\n\r");
+	  }
+	  else {
+		  logI("STM32 FatFs - GetFree OK...\n\r");
+		  totalSpace = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
+		  freeSpace = (uint32_t)(fre_clust * pfs->csize * 0.5);
+		  SpaceUsed = totalSpace - freeSpace;
+		  logI("Total Space: %ld , SpeceUsed: %ld , FreeSpace: %ld \n\r", totalSpace, SpaceUsed, freeSpace);
+	  }
   }
 
   /* USER CODE END 2 */

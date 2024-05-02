@@ -51,7 +51,7 @@ __weak uint8_t BSP_SD_Init(void)
   /* Check if the SD card is plugged in the slot */
   if (BSP_SD_IsDetected() != SD_PRESENT)
   {
-    return MSD_ERROR;
+	  return MSD_ERROR_SD_NOT_PRESENT;
   }
   /* HAL SD initialization */
   sd_state = HAL_SD_Init(&hsd);
