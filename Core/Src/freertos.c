@@ -280,7 +280,7 @@ void StartTaskETH(void *argument)
 	wizchip_init(bufSize, bufSize);
 
 	wizchip_init(bufSize, bufSize);
-	wiz_NetInfo netInfo = { .mac 	= {0x00, 0x08, 0xdc, 0xab, 0xcd, 0xef},	// Mac address
+	wiz_NetInfo netInfo = { .mac 	= {0x00, 0x08, 0xdc, 0xab, 0xcd, 0xef},		// Mac address
 			                    .ip 	= {192, 168, 10, 11},					// IP address
 			                    .sn 	= {255, 255, 255, 0},					// Subnet mask
 			                    .gw 	= {192, 168, 10, 250}};					// Gateway address
