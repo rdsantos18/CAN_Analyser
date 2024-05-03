@@ -44,9 +44,9 @@ uint32_t timer_led = 0;
 uint32_t timer_teste = 0;
 
 char line[100] = {0}; /* Line buffer */
-char SDPath[4];   /* SD logical drive path */
+extern char SDPath[4];   /* SD logical drive path */
 FIL USERFile;       /* File object for USER */
-FATFS SDFatFS;    /* File system object for SD logical drive */
+extern FATFS SDFatFS;    /* File system object for SD logical drive */
 FATFS *pfs;
 FRESULT fr;     /* FatFs return code */
 DWORD fre_clust;
@@ -54,6 +54,7 @@ uint32_t totalSpace, freeSpace, SpaceUsed;
 uint32_t duracao = 0;
 uint32_t size = 0;
 unsigned int ByteRead;
+volatile unsigned long ulHighFrequencyTimerTicks = 0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -74,8 +75,15 @@ unsigned int ByteRead;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for TaskETH */
+osThreadId_t TaskETHHandle;
+const osThreadAttr_t TaskETH_attributes = {
+  .name = "TaskETH",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,9 +92,27 @@ const osThreadAttr_t defaultTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
+void StartTaskETH(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* Hook prototypes */
+void configureTimerForRunTimeStats(void);
+unsigned long getRunTimeCounterValue(void);
+
+/* USER CODE BEGIN 1 */
+/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
+__weak void configureTimerForRunTimeStats(void)
+{
+	ulHighFrequencyTimerTicks = 0;
+}
+
+__weak unsigned long getRunTimeCounterValue(void)
+{
+	return ulHighFrequencyTimerTicks;
+}
+/* USER CODE END 1 */
 
 /**
   * @brief  FreeRTOS initialization
@@ -117,6 +143,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* creation of TaskETH */
+  TaskETHHandle = osThreadNew(StartTaskETH, NULL, &TaskETH_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -220,6 +249,24 @@ void StartDefaultTask(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
+}
+
+/* USER CODE BEGIN Header_StartTaskETH */
+/**
+* @brief Function implementing the TaskETH thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskETH */
+void StartTaskETH(void *argument)
+{
+  /* USER CODE BEGIN StartTaskETH */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTaskETH */
 }
 
 /* Private application code --------------------------------------------------*/

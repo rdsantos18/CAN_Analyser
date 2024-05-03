@@ -91,6 +91,7 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE BEGIN PV */
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
+extern volatile unsigned long ulHighFrequencyTimerTicks;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -142,7 +143,6 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  //MX_FATFS_Init();
   MX_I2C1_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -188,7 +188,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
   }
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -366,7 +366,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == TIM6) {
+	  ulHighFrequencyTimerTicks++;
+  }
   /* USER CODE END Callback 1 */
 }
 
