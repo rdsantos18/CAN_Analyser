@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "can.h"
 #include "dma.h"
 #include "fatfs.h"
@@ -55,8 +56,6 @@ uint8_t	bufSize[] = {2, 2, 2, 2};
 uint8_t WEBRX_BUF[2048];
 uint8_t WEBTX_BUF[2048];
 uint8_t socknumlist[] = {2, 3};
-uint32_t timer_led = 0;
-uint32_t timer_teste = 0;
 
 CAN_TxHeaderTypeDef   TxHeader1;
 CAN_RxHeaderTypeDef   RxHeader1;
@@ -78,15 +77,6 @@ uint32_t TxMailbox2 = 0;
 uint8_t Flag_CAN_1 = 0;
 uint8_t Flag_CAN_2 = 0;
 
-RTC_TimeTypeDef gTime = {0};
-RTC_DateTypeDef gDate = {0};
-
-char SDPath[4];   /* SD logical drive path */
-FATFS SDFatFS;    /* File system object for SD logical drive */
-FATFS *pfs;
-FRESULT fr;     /* FatFs return code */
-DWORD fre_clust;
-uint32_t totalSpace, freeSpace, SpaceUsed;
 //static uint8_t buffer[_MAX_SS]; /* a work buffer for the f_mkfs() */
 extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE END PD */
@@ -105,6 +95,7 @@ extern CAN_HandleTypeDef hcan2;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -152,7 +143,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   //MX_FATFS_Init();
-  MX_USB_DEVICE_Init();
   MX_I2C1_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -176,39 +166,19 @@ int main(void)
   reg_httpServer_cbfunc(NVIC_SystemReset, NULL);
 
   logI("Init CAN ANALYSER STM32 v1.0.0\n\r");
-  if (FATFS_LinkDriver(&SD_Driver, SDPath) == 0) {
-	  // Mount SD CARD
-	  fr = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
-	  if(fr != FR_OK){
-		  logI("STM32 FatFs - GetMount ERROR...\n\r");
-	  }
-	  else {
-		  logI("STM32 FatFs - GetMount OK...\n\r");
-	  }
-
-//	  fr = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, buffer, sizeof(buffer));
-//	  if(fr != FR_OK){
-//		  logI("STM32 FatFs - Mkfs ERROR...\n\r");
-//	  }
-//	  else {
-//		  logI("STM32 FatFs - Mkfs OK...\n\r");
-//	  }
-
-	  // Check freeSpace space
-	  fr = f_getfree("", &fre_clust, &pfs);
-	  if(fr != FR_OK){
-		  logI("STM32 FatFs - GetFree ERROR...\n\r");
-	  }
-	  else {
-		  logI("STM32 FatFs - GetFree OK...\n\r");
-		  totalSpace = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
-		  freeSpace = (uint32_t)(fre_clust * pfs->csize * 0.5);
-		  SpaceUsed = totalSpace - freeSpace;
-		  logI("Total Space: %ld , SpeceUsed: %ld , FreeSpace: %ld \n\r", totalSpace, SpaceUsed, freeSpace);
-	  }
-  }
 
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -217,34 +187,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-	  HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
-	  HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN);
-
-	  if(HAL_GetTick() - timer_led > 100) {
-		  timer_led = HAL_GetTick();
-		  HAL_GPIO_TogglePin(LED_INT_GPIO_Port, LED_INT_Pin);
-	  }
-	  //
-	  if(HAL_GetTick() - timer_teste > 1000) {
-		  timer_teste = HAL_GetTick();
-		  logI("CAN1 0x%08lx DATA: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X  %02dh:%02dm:%02ds:%02ldmm\n\r", RxHeader1.ExtId,
-			    RxData1[0], RxData1[1], RxData1[2], RxData1[3], RxData1[4], RxData1[5], RxData1[6], RxData1[7],
-				gTime.Hours, gTime.Minutes, gTime.Seconds, gTime.SubSeconds);
-	  }
-	  // HTTP
-	  for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
-		  httpServer_run(i); 	// HTTP Server handler
-	  }
-
-	  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
-		  //logI("Cable USB Connected\n\r");
-	  }
-	  else {
-		  //logI("Cable USB Not Connected\n\r");
-	  }
   }
-  /* USER CODE END 3 */
+	/* USER CODE END 3 */
 }
 
 /**
@@ -404,6 +348,27 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	}
 }
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
