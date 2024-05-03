@@ -20,9 +20,11 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "can.h"
+#include "crc.h"
 #include "dma.h"
 #include "fatfs.h"
 #include "i2c.h"
+#include "rng.h"
 #include "rtc.h"
 #include "sdio.h"
 #include "spi.h"
@@ -32,31 +34,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "wizchip_conf.h"
-#include "socket.h"
-#include "httpServer.h"
 #include "log.h"
 #include "fatfs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-void cs_sel(void);
-void cs_desel(void);
-uint8_t spi_rb(void);
-void spi_wb(uint8_t b);
-void spi_rb_burst(uint8_t *buf, uint16_t len);
-void spi_wb_burst(uint8_t *buf, uint16_t len);
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-uint8_t rcvBuf[200] = {0}, sendBuf[200] = {0};
-uint8_t	bufSize[] = {2, 2, 2, 2};
-uint8_t WEBRX_BUF[2048];
-uint8_t WEBTX_BUF[2048];
-uint8_t socknumlist[] = {2, 3};
-
 CAN_TxHeaderTypeDef   TxHeader1;
 CAN_RxHeaderTypeDef   RxHeader1;
 HAL_StatusTypeDef HAL_Retval1 = HAL_ERROR;
@@ -83,7 +71,7 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define MAX_HTTPSOCK	2
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -145,27 +133,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_USART3_UART_Init();
+  MX_CRC_Init();
+  MX_RNG_Init();
   /* USER CODE BEGIN 2 */
-  reg_wizchip_cs_cbfunc(cs_sel, cs_desel);
-  reg_wizchip_spi_cbfunc(spi_rb, spi_wb);
-  reg_wizchip_spiburst_cbfunc(spi_rb_burst, spi_wb_burst);
-  //reg_wizchip_cris_cbfunc(vPortEnterCritical, vPortExitCritical);
-
-  wizchip_init(bufSize, bufSize);
-
-  wizchip_init(bufSize, bufSize);
-  wiz_NetInfo netInfo = { .mac 	= {0x00, 0x08, 0xdc, 0xab, 0xcd, 0xef},	// Mac address
-		                    .ip 	= {192, 168, 10, 11},					// IP address
-		                    .sn 	= {255, 255, 255, 0},					// Subnet mask
-		                    .gw 	= {192, 168, 10, 250}};					// Gateway address
-
-  wizchip_setnetinfo(&netInfo);
-  wizchip_getnetinfo(&netInfo);
-
-  httpServer_init(WEBTX_BUF, WEBRX_BUF, MAX_HTTPSOCK, socknumlist);		// Tx/Rx buffers (1kB) / The number of W5500 chip H/W sockets in use
-  reg_httpServer_cbfunc(NVIC_SystemReset, NULL);
-
-  logI("Init CAN ANALYSER STM32 v1.0.0\n\r");
+  logI("CAN ANALYSER STM32 FreeRTOS v1.0.0 03/05/2024\n\r");
 
   /* USER CODE END 2 */
 
@@ -238,40 +209,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void cs_sel(void)
-{
-	//HAL_GPIO_WritePin(CS_W5100_GPIO_Port, CS_W5100_Pin, GPIO_PIN_RESET); //CS LOW
-}
-
-void cs_desel(void)
-{
-	//HAL_GPIO_WritePin(CS_W5100_GPIO_Port, CS_W5100_Pin, GPIO_PIN_SET); //CS HIGH
-}
-
-uint8_t spi_rb(void)
-{
-	uint8_t rbuf;
-	HAL_SPI_Receive(&hspi1, &rbuf, 1, 0xFFFFFFFF);
-	return rbuf;
-}
-
-void spi_wb(uint8_t b)
-{
-	HAL_SPI_Transmit(&hspi1, &b, 1, 0xFFFFFFFF);
-}
-
-void spi_rb_burst(uint8_t *buf, uint16_t len)
-{
-	HAL_SPI_Receive_DMA(&hspi1, buf, len);
-	while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_RX);
-}
-
-void spi_wb_burst(uint8_t *buf, uint16_t len)
-{
-	HAL_SPI_Transmit_DMA(&hspi1, buf, len);
-	while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_TX);
-}
-
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 	if(hcan->Instance == CAN1) {

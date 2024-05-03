@@ -25,10 +25,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "spi.h"
 #include "fatfs.h"
 #include "rtc.h"
 #include "log.h"
 #include "usb_device.h"
+#include "wizchip_conf.h"
+#include "socket.h"
+#include "httpServer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,16 +59,27 @@ uint32_t duracao = 0;
 uint32_t size = 0;
 unsigned int ByteRead;
 volatile unsigned long ulHighFrequencyTimerTicks = 0;
+
+uint8_t rcvBuf[200] = {0}, sendBuf[200] = {0};
+uint8_t	bufSize[] = {2, 2, 2, 2};
+uint8_t WEBRX_BUF[2048];
+uint8_t WEBTX_BUF[2048];
+uint8_t socknumlist[] = {2, 3};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+void cs_sel(void);
+void cs_desel(void);
+uint8_t spi_rb(void);
+void spi_wb(uint8_t b);
+void spi_rb_burst(uint8_t *buf, uint16_t len);
+void spi_wb_burst(uint8_t *buf, uint16_t len);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define MAX_HTTPSOCK	2
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -235,10 +250,6 @@ void StartDefaultTask(void *argument)
 			    RxData1[0], RxData1[1], RxData1[2], RxData1[3], RxData1[4], RxData1[5], RxData1[6], RxData1[7],
 				gTime.Hours, gTime.Minutes, gTime.Seconds, gTime.SubSeconds);
 	  }
-	  // HTTP
-//	  for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
-//		  httpServer_run(i); 	// HTTP Server handler
-//	  }
 
 	  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
 		  //logI("Cable USB Connected\n\r");
@@ -261,9 +272,31 @@ void StartDefaultTask(void *argument)
 void StartTaskETH(void *argument)
 {
   /* USER CODE BEGIN StartTaskETH */
+	reg_wizchip_cs_cbfunc(cs_sel, cs_desel);
+	reg_wizchip_spi_cbfunc(spi_rb, spi_wb);
+	//reg_wizchip_spiburst_cbfunc(spi_rb_burst, spi_wb_burst);
+	reg_wizchip_cris_cbfunc(vPortEnterCritical, vPortExitCritical);
+
+	wizchip_init(bufSize, bufSize);
+
+	wizchip_init(bufSize, bufSize);
+	wiz_NetInfo netInfo = { .mac 	= {0x00, 0x08, 0xdc, 0xab, 0xcd, 0xef},	// Mac address
+			                    .ip 	= {192, 168, 10, 11},					// IP address
+			                    .sn 	= {255, 255, 255, 0},					// Subnet mask
+			                    .gw 	= {192, 168, 10, 250}};					// Gateway address
+
+	wizchip_setnetinfo(&netInfo);
+	wizchip_getnetinfo(&netInfo);
+
+	httpServer_init(WEBTX_BUF, WEBRX_BUF, MAX_HTTPSOCK, socknumlist);		// Tx/Rx buffers (1kB) / The number of W5500 chip H/W sockets in use
+	reg_httpServer_cbfunc(NVIC_SystemReset, NULL);
   /* Infinite loop */
   for(;;)
   {
+	  // HTTP
+	  for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
+		  httpServer_run(i); 	// HTTP Server handler
+	  }
     osDelay(1);
   }
   /* USER CODE END StartTaskETH */
@@ -271,6 +304,38 @@ void StartTaskETH(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void cs_sel(void)
+{
+	//HAL_GPIO_WritePin(CS_W5100_GPIO_Port, CS_W5100_Pin, GPIO_PIN_RESET); //CS LOW
+}
 
+void cs_desel(void)
+{
+	//HAL_GPIO_WritePin(CS_W5100_GPIO_Port, CS_W5100_Pin, GPIO_PIN_SET); //CS HIGH
+}
+
+uint8_t spi_rb(void)
+{
+	uint8_t rbuf;
+	HAL_SPI_Receive(&hspi1, &rbuf, 1, 0xFFFFFFFF);
+	return rbuf;
+}
+
+void spi_wb(uint8_t b)
+{
+	HAL_SPI_Transmit(&hspi1, &b, 1, 0xFFFFFFFF);
+}
+
+void spi_rb_burst(uint8_t *buf, uint16_t len)
+{
+	HAL_SPI_Receive_DMA(&hspi1, buf, len);
+	while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_RX);
+}
+
+void spi_wb_burst(uint8_t *buf, uint16_t len)
+{
+	HAL_SPI_Transmit_DMA(&hspi1, buf, len);
+	while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_TX);
+}
 /* USER CODE END Application */
 
