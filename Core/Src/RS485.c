@@ -44,8 +44,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 	sendRS485(Tx485, 13);
 	HAL_UARTEx_ReceiveToIdle_IT(&huart2, Rx485, 128);
-	logI("BMS Len: %d  %02X 02X 02X 02X 02X 02X 02X 02X \n\r", Rx485[0],
-			Rx485[1], Rx485[2], Rx485[3], Rx485[4], Rx485[5], Rx485[6], Rx485[7], Rx485[8] );
+	logI("BMS Len: %d  %02X 02X 02X 02X 02X 02X 02X 02X \n\r", 13,
+			Rx485[0], Rx485[1], Rx485[2],
+			Rx485[3], Rx485[4], Rx485[5],
+			Rx485[6], Rx485[7], Rx485[8],
+			Rx485[9], Rx485[10], Rx485[11],
+			Rx485[12]);
 	HAL_GPIO_TogglePin(LED_CAN1_RX_GPIO_Port, LED_CAN1_RX_Pin);
 }
 

@@ -26,7 +26,9 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
+//static volatile uint8_t isRX2 = 0;
+//volatile uint16_t ptr_485 = 0;
+//volatile uint8_t rx_rs485[1024] = {0};
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -233,7 +235,18 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-
+//  if (USART2->BRR & UART_IT_RXNE) {
+//      isRX2 = 1;
+//  }
+//  if(isRX2) {
+//	  uint8_t rbyte = huart2.Instance->DR;
+//	  //__HAL_UART_SEND_REQ(&huart2, UART_RXDATA_FLUSH_REQUEST);
+//	  rx_rs485[ptr_485] = rbyte;
+//	  ptr_485++;
+//	  if(ptr_485 >= 1024) ptr_485 = 0;
+//	  isRX2 = 0;
+//	  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
+//  }
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */

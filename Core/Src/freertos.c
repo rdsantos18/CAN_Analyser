@@ -67,8 +67,8 @@ volatile unsigned long ulHighFrequencyTimerTicks = 0;
 
 uint8_t rcvBuf[200] = {0}, sendBuf[200] = {0};
 uint8_t	bufSize[] = {2, 2, 2, 2};
-uint8_t WEBRX_BUF[2048];
-uint8_t WEBTX_BUF[2048];
+uint8_t WEBRX_BUF[2048] = {0};
+uint8_t WEBTX_BUF[2048] = {0};
 uint8_t socknumlist[] = {2, 3};
 /* USER CODE END PTD */
 
