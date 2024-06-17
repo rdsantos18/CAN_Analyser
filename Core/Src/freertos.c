@@ -34,6 +34,7 @@
 #include "socket.h"
 #include "httpServer.h"
 #include "rs485.h"
+#include "index.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -300,7 +301,7 @@ void StartTaskETH(void *argument)
 			                .sn 	= {255, 255, 255, 0},						// Subnet mask
 							.dns    = {192, 168, 10, 250},						// DNS
 			                .gw 	= {192, 168, 10, 250},						// Gateway address
-							.dhcp    = NETINFO_STATIC 							// DHCP enable/disable
+							.dhcp   = NETINFO_STATIC 							// DHCP enable/disable
 	                      };
 
 	wizchip_setnetinfo(&netInfo);
@@ -308,6 +309,7 @@ void StartTaskETH(void *argument)
 
 	httpServer_init(WEBTX_BUF, WEBRX_BUF, MAX_HTTPSOCK, socknumlist);		// Tx/Rx buffers (1kB) / The number of W5500 chip H/W sockets in use
 	reg_httpServer_cbfunc(NVIC_SystemReset, NULL);
+	reg_httpServer_webContent((uint8_t *)"index.html",    (uint8_t *)index_html);			// index.html
   /* Infinite loop */
   for(;;)
   {
