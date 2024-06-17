@@ -39,7 +39,9 @@
 /* USER CODE BEGIN PTD */
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern CAN_RxHeaderTypeDef   RxHeader1;
-extern uint8_t RxData1[];
+extern CAN_RxHeaderTypeDef   RxHeader2;
+extern uint8_t RxData1[], RxData2[];
+extern uint8_t Flag_CAN_1, Flag_CAN_2;
 
 RTC_TimeTypeDef gTime = {0};
 RTC_DateTypeDef gDate = {0};
@@ -243,14 +245,19 @@ void StartDefaultTask(void *argument)
 		  timer_led = HAL_GetTick();
 		  HAL_GPIO_TogglePin(LED_INT_GPIO_Port, LED_INT_Pin);
 	  }
-	  //
-	  if(HAL_GetTick() - timer_teste > 1000) {
-		  timer_teste = HAL_GetTick();
-		  logI("CAN1 0x%08lx DATA: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X  %02dh:%02dm:%02ds:%02ldmm\n\r", RxHeader1.ExtId,
-			    RxData1[0], RxData1[1], RxData1[2], RxData1[3], RxData1[4], RxData1[5], RxData1[6], RxData1[7],
-				gTime.Hours, gTime.Minutes, gTime.Seconds, gTime.SubSeconds);
-	  }
+	  if( Flag_CAN_1 ) {
+		  Flag_CAN_1 = 0;
+		  HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_RESET);
+		  logI("CAN1 0x%08lX MSG: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X  %ld\n\r", RxHeader1.ExtId,
+			    RxData1[0], RxData1[1], RxData1[2], RxData1[3], RxData1[4], RxData1[5], RxData1[6], RxData1[7], HAL_GetTick());
 
+	  }
+	  if( Flag_CAN_2 ) {
+		  Flag_CAN_2 = 0;
+		  HAL_GPIO_WritePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin, GPIO_PIN_RESET);
+		  logI("CAN2 0x%08lX MSG: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X  %ld\n\r", RxHeader2.ExtId,
+			    RxData2[0], RxData2[1], RxData2[2], RxData2[3], RxData2[4], RxData2[5], RxData2[6], RxData2[7], HAL_GetTick());
+	  }
 	  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
 		  //logI("Cable USB Connected\n\r");
 	  }
@@ -281,9 +288,10 @@ void StartTaskETH(void *argument)
 
 	wizchip_init(bufSize, bufSize);
 	wiz_NetInfo netInfo = { .mac 	= {0x00, 0x08, 0xdc, 0xab, 0xcd, 0xef},		// Mac address
-			                    .ip 	= {192, 168, 10, 11},					// IP address
-			                    .sn 	= {255, 255, 255, 0},					// Subnet mask
-			                    .gw 	= {192, 168, 10, 250}};					// Gateway address
+			                .ip 	= {192, 168, 10, 11},						// IP address
+			                .sn 	= {255, 255, 255, 0},						// Subnet mask
+							.dns    = {192, 168, 10, 250},						// DNS
+			                .gw 	= {192, 168, 10, 250}};						// Gateway address
 
 	wizchip_setnetinfo(&netInfo);
 	wizchip_getnetinfo(&netInfo);
@@ -306,12 +314,12 @@ void StartTaskETH(void *argument)
 /* USER CODE BEGIN Application */
 void cs_sel(void)
 {
-	//HAL_GPIO_WritePin(CS_W5100_GPIO_Port, CS_W5100_Pin, GPIO_PIN_RESET); //CS LOW
+	HAL_GPIO_WritePin(SPI_NSS_GPIO_Port, SPI_NSS_Pin, GPIO_PIN_RESET); //CS LOW
 }
 
 void cs_desel(void)
 {
-	//HAL_GPIO_WritePin(CS_W5100_GPIO_Port, CS_W5100_Pin, GPIO_PIN_SET); //CS HIGH
+	HAL_GPIO_WritePin(SPI_NSS_GPIO_Port, SPI_NSS_Pin, GPIO_PIN_SET); //CS HIGH
 }
 
 uint8_t spi_rb(void)

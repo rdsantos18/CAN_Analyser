@@ -67,8 +67,12 @@ void Error_Handler(void);
 #define LED_CAN2_TX_GPIO_Port GPIOC
 #define LED_CAN2_RX_Pin GPIO_PIN_3
 #define LED_CAN2_RX_GPIO_Port GPIOC
+#define SPI_NSS_Pin GPIO_PIN_0
+#define SPI_NSS_GPIO_Port GPIOA
 #define TX_485_EN_Pin GPIO_PIN_1
 #define TX_485_EN_GPIO_Port GPIOA
+#define SPI1_NSS_Pin GPIO_PIN_4
+#define SPI1_NSS_GPIO_Port GPIOA
 #define INT_ETH_Pin GPIO_PIN_4
 #define INT_ETH_GPIO_Port GPIOC
 #define ETH_RST_Pin GPIO_PIN_5
