@@ -289,7 +289,7 @@ void StartTaskETH(void *argument)
   /* USER CODE BEGIN StartTaskETH */
 	reg_wizchip_cs_cbfunc(cs_sel, cs_desel);
 	reg_wizchip_spi_cbfunc(spi_rb, spi_wb);
-	//reg_wizchip_spiburst_cbfunc(spi_rb_burst, spi_wb_burst);
+	reg_wizchip_spiburst_cbfunc(spi_rb_burst, spi_wb_burst);
 	reg_wizchip_cris_cbfunc(vPortEnterCritical, vPortExitCritical);
 
 	wizchip_init(bufSize, bufSize);
@@ -299,7 +299,9 @@ void StartTaskETH(void *argument)
 			                .ip 	= {192, 168, 10, 11},						// IP address
 			                .sn 	= {255, 255, 255, 0},						// Subnet mask
 							.dns    = {192, 168, 10, 250},						// DNS
-			                .gw 	= {192, 168, 10, 250}};						// Gateway address
+			                .gw 	= {192, 168, 10, 250},						// Gateway address
+							.dhcp    = NETINFO_STATIC 							// DHCP enable/disable
+	                      };
 
 	wizchip_setnetinfo(&netInfo);
 	wizchip_getnetinfo(&netInfo);
@@ -333,25 +335,23 @@ void cs_desel(void)
 uint8_t spi_rb(void)
 {
 	uint8_t rbuf;
-	HAL_SPI_Receive(&hspi1, &rbuf, 1, 0xFFFFFFFF);
+	HAL_SPI_Receive(&hspi1, &rbuf, 1, 1000);
 	return rbuf;
 }
 
 void spi_wb(uint8_t b)
 {
-	HAL_SPI_Transmit(&hspi1, &b, 1, 0xFFFFFFFF);
+	HAL_SPI_Transmit(&hspi1, &b, 1, 1000);
 }
 
 void spi_rb_burst(uint8_t *buf, uint16_t len)
 {
-	HAL_SPI_Receive_DMA(&hspi1, buf, len);
-	while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_RX);
+	HAL_SPI_Receive(&hspi1, buf, len, 1000);
 }
 
 void spi_wb_burst(uint8_t *buf, uint16_t len)
 {
-	HAL_SPI_Transmit_DMA(&hspi1, buf, len);
-	while(HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY_TX);
+	HAL_SPI_Transmit(&hspi1, buf, len, 1000);
 }
 /* USER CODE END Application */
 

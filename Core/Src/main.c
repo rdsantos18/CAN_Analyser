@@ -145,9 +145,12 @@ int main(void)
   //HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_SET);	// PC3
   //HAL_GPIO_WritePin(LED_485_TX_GPIO_Port, LED_485_TX_Pin, GPIO_PIN_SET);      // PB0
   //HAL_GPIO_WritePin(LED_485_RX_GPIO_Port, LED_485_RX_Pin, GPIO_PIN_SET);		// PB1
-  HAL_GPIO_WritePin(ETH_RST_GPIO_Port,ETH_RST_Pin, GPIO_PIN_RESET);
-  HAL_Delay(1);
-  HAL_GPIO_WritePin(ETH_RST_GPIO_Port,ETH_RST_Pin, GPIO_PIN_SET);
+
+  HAL_GPIO_WritePin(ETH_RST_GPIO_Port, ETH_RST_Pin, GPIO_PIN_RESET);
+  HAL_Delay(10);
+  HAL_GPIO_WritePin(ETH_RST_GPIO_Port, ETH_RST_Pin, GPIO_PIN_SET);
+  HAL_Delay(100);
+
   CAN1_Config();
   CAN2_Config();
 
