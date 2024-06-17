@@ -9,6 +9,7 @@
 #define INC_RS485_H_
 
 void sendRS485 (uint8_t *data, uint16_t size);
+void test_485(void);
 uint8_t calc_crc_8(uint8_t *data);
 
 #endif /* INC_RS485_H_ */

@@ -46,6 +46,25 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 			Rx485[1], Rx485[2], Rx485[3], Rx485[4], Rx485[5], Rx485[6], Rx485[7], Rx485[8] );
 }
 
+void test_485(void)
+{
+	Tx485[0] = 0xA5;
+	Tx485[1] = 0x40;
+	Tx485[2] = 0x90;
+	Tx485[3] = 0x08;
+	Tx485[4] = 0x00;
+	Tx485[5] = 0x00;
+	Tx485[6] = 0x00;
+	Tx485[7] = 0x00;
+	Tx485[8] = 0x00;
+	Tx485[9] = 0x00;
+	Tx485[10] = 0x00;
+	Tx485[11] = 0x00;
+	Tx485[12] = 0x7D;
+
+	sendRS485(Tx485, 13);
+}
+
 uint8_t calc_crc_8(uint8_t *data)
 {
 	crc_16 = 0;

@@ -33,6 +33,7 @@
 #include "wizchip_conf.h"
 #include "socket.h"
 #include "httpServer.h"
+#include "rs485.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,6 +49,7 @@ RTC_DateTypeDef gDate = {0};
 
 uint32_t timer_led = 0;
 uint32_t timer_teste = 0;
+uint32_t timer_rs485 = 0;
 
 char line[100] = {0}; /* Line buffer */
 extern char SDPath[4];   /* SD logical drive path */
@@ -258,6 +260,12 @@ void StartDefaultTask(void *argument)
 		  logI("CAN2 0x%08lX MSG: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X  %ld\n\r", RxHeader2.ExtId,
 			    RxData2[0], RxData2[1], RxData2[2], RxData2[3], RxData2[4], RxData2[5], RxData2[6], RxData2[7], HAL_GetTick());
 	  }
+	  // RS485
+	  if(HAL_GetTick() - timer_rs485 > 1000) {
+		  timer_rs485 = HAL_GetTick();
+		  test_485();
+	  }
+	  //
 	  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
 		  //logI("Cable USB Connected\n\r");
 	  }
