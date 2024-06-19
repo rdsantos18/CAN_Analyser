@@ -25,6 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "usart.h"
 #include "spi.h"
 #include "fatfs.h"
 #include "rtc.h"
@@ -44,6 +45,12 @@ extern CAN_RxHeaderTypeDef   RxHeader1;
 extern CAN_RxHeaderTypeDef   RxHeader2;
 extern uint8_t RxData1[], RxData2[];
 extern uint8_t Flag_CAN_1, Flag_CAN_2;
+extern volatile uint8_t rx_rs485[];
+extern volatile uint8_t rx_rs232[];
+extern volatile uint16_t ptr_232;
+extern volatile uint16_t ptr_485;
+extern volatile uint8_t byte_rs232[];
+extern volatile uint8_t byte_rs485[];
 
 RTC_TimeTypeDef gTime = {0};
 RTC_DateTypeDef gDate = {0};
@@ -51,6 +58,7 @@ RTC_DateTypeDef gDate = {0};
 uint32_t timer_led = 0;
 uint32_t timer_teste = 0;
 uint32_t timer_rs485 = 0;
+uint32_t timer_rs232 = 0;
 
 char line[100] = {0}; /* Line buffer */
 extern char SDPath[4];   /* SD logical drive path */
@@ -70,6 +78,9 @@ uint8_t	bufSize[] = {2, 2, 2, 2};
 uint8_t WEBRX_BUF[2048] = {0};
 uint8_t WEBTX_BUF[2048] = {0};
 uint8_t socknumlist[] = {2, 3};
+
+uint16_t last_232 = 0;
+uint16_t last_485 = 0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -267,6 +278,17 @@ void StartDefaultTask(void *argument)
 		  test_485();
 	  }
 	  //
+	  if(HAL_GetTick() - timer_rs232 > 1000) {
+		  timer_rs232 = HAL_GetTick();
+		  if(last_485 != ptr_485) {
+			  last_485 = ptr_485;
+			  logI("RS485[%d]\n\r",	last_485 );
+		  }
+		  if(last_232 != ptr_232) {
+			  last_232 = ptr_232;
+			  logI("RS232[%d]\n\r",	last_232 );
+		  }
+	  }
 	  if(hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
 		  //logI("Cable USB Connected\n\r");
 	  }
@@ -354,6 +376,19 @@ void spi_rb_burst(uint8_t *buf, uint16_t len)
 void spi_wb_burst(uint8_t *buf, uint16_t len)
 {
 	HAL_SPI_Transmit(&hspi1, buf, len, 1000);
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance==USART1) {	// UART 1
+
+	}
+	if(huart->Instance==USART2) {	// UART 2 RS485
+		HAL_UART_Receive_IT(&huart2, (uint8_t *)byte_rs485, 1);
+	}
+	if(huart->Instance==USART6) {	// UART6
+		HAL_UART_Receive_IT(&huart6, (uint8_t *)byte_rs232, 1);
+	}
 }
 /* USER CODE END Application */
 

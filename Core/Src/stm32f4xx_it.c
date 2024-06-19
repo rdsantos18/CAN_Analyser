@@ -26,9 +26,21 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-//static volatile uint8_t isRX2 = 0;
-//volatile uint16_t ptr_485 = 0;
-//volatile uint8_t rx_rs485[1024] = {0};
+static volatile uint8_t isRX1 = 0;
+volatile uint16_t ptr_rx1 = 0;
+volatile uint8_t byte_rx1[2] = {0};
+volatile uint8_t rx_rx1[1024] = {0};
+
+static volatile uint8_t isRX2 = 0;
+volatile uint16_t ptr_485 = 0;
+volatile uint8_t byte_rs485[2] = {0};
+volatile uint8_t rx_rs485[1024] = {0};
+
+static volatile uint8_t isRX3 = 0;
+volatile uint16_t ptr_232 = 0;
+volatile uint8_t byte_rs232[2] = {0};
+volatile uint8_t rx_rs232[1024] = {0};
+
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -68,7 +80,7 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart6;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
@@ -235,37 +247,21 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-//  if (USART2->BRR & UART_IT_RXNE) {
-//      isRX2 = 1;
-//  }
-//  if(isRX2) {
-//	  uint8_t rbyte = huart2.Instance->DR;
-//	  //__HAL_UART_SEND_REQ(&huart2, UART_RXDATA_FLUSH_REQUEST);
-//	  rx_rs485[ptr_485] = rbyte;
-//	  ptr_485++;
-//	  if(ptr_485 >= 1024) ptr_485 = 0;
-//	  isRX2 = 0;
-//	  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
-//  }
+  if (USART2->SR & UART_IT_RXNE) {
+      isRX2 = 1;
+  }
+  if(isRX2) {
+	  rx_rs485[ptr_485] = huart2.Instance->DR;
+	  ptr_485++;
+	  if(ptr_485 >= 1024) ptr_485 = 0;
+	  isRX2 = 0;
+	  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
+  }
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
 
   /* USER CODE END USART2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles USART3 global interrupt.
-  */
-void USART3_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART3_IRQn 0 */
-
-  /* USER CODE END USART3_IRQn 0 */
-  HAL_UART_IRQHandler(&huart3);
-  /* USER CODE BEGIN USART3_IRQn 1 */
-
-  /* USER CODE END USART3_IRQn 1 */
 }
 
 /**
@@ -392,6 +388,29 @@ void DMA2_Stream6_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Stream6_IRQn 1 */
 
   /* USER CODE END DMA2_Stream6_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART6 global interrupt.
+  */
+void USART6_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART6_IRQn 0 */
+  if (USART6->SR & UART_IT_RXNE) {
+      isRX3 = 1;
+  }
+  if(isRX3) {
+	  rx_rs232[ptr_232] = huart6.Instance->DR;
+	  ptr_232++;
+	  if(ptr_232 >= 1024) ptr_232 = 0;
+	  isRX3 = 0;
+	  __HAL_UART_ENABLE_IT(&huart6, UART_IT_RXNE);
+	  }
+  /* USER CODE END USART6_IRQn 0 */
+  HAL_UART_IRQHandler(&huart6);
+  /* USER CODE BEGIN USART6_IRQn 1 */
+
+  /* USER CODE END USART6_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

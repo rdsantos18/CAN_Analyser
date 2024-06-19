@@ -81,6 +81,12 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern volatile unsigned long ulHighFrequencyTimerTicks;
+extern volatile uint16_t ptr_232;
+extern volatile uint8_t rx_rs232[];
+extern volatile uint16_t ptr_485;
+extern volatile uint8_t rx_rs485[];
+extern volatile uint8_t byte_rs232[];
+extern volatile uint8_t byte_rs485[];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -133,11 +139,16 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
-  MX_USART3_UART_Init();
   MX_CRC_Init();
   MX_RNG_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-  logI("CAN ANALYSER STM32 FreeRTOS v1.0.0 17/06/2024\n\r");
+  logI("CAN ANALYSER STM32 FreeRTOS v1.0.0 19/06/2024\n\r");
+
+  ptr_232 = 0;
+  HAL_UART_Receive_IT(&huart6, (uint8_t *)byte_rs232, 1);
+  ptr_485 = 0;
+  HAL_UART_Receive_IT(&huart2, (uint8_t *)byte_rs485, 1);
 
   //HAL_GPIO_WritePin(LED_CAN1_TX_GPIO_Port, LED_CAN1_TX_Pin, GPIO_PIN_SET);	// PC0
   //HAL_GPIO_WritePin(LED_CAN1_RX_GPIO_Port, LED_CAN1_RX_Pin, GPIO_PIN_SET);	// PC1
