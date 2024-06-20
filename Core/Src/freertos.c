@@ -36,10 +36,17 @@
 #include "httpServer.h"
 #include "rs485.h"
 #include "index.h"
+#include "loopback.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+#define LOOPBACK_DATA_BUF_SIZE			1024
+
+
+int32_t server_tcp(uint8_t sn);
+
+
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern CAN_RxHeaderTypeDef   RxHeader1;
 extern CAN_RxHeaderTypeDef   RxHeader2;
@@ -59,6 +66,7 @@ uint32_t timer_led = 0;
 uint32_t timer_teste = 0;
 uint32_t timer_rs485 = 0;
 uint32_t timer_rs232 = 0;
+uint32_t tmr_keep_alive = 0;
 
 char line[100] = {0}; /* Line buffer */
 extern char SDPath[4];   /* SD logical drive path */
@@ -74,13 +82,20 @@ unsigned int ByteRead;
 volatile unsigned long ulHighFrequencyTimerTicks = 0;
 
 uint8_t rcvBuf[200] = {0}, sendBuf[200] = {0};
-uint8_t	bufSize[] = {2, 2, 2, 2};
+uint8_t	bufSize[] = {2, 2, 2, 2, 2, 2, 2, 2};
 uint8_t WEBRX_BUF[2048] = {0};
 uint8_t WEBTX_BUF[2048] = {0};
 uint8_t socknumlist[] = {2, 3};
 
 uint16_t last_232 = 0;
 uint16_t last_485 = 0;
+
+uint8_t isConnected = 0;
+uint16_t socket_size = 0;
+
+uint8_t buf_tx[LOOPBACK_DATA_BUF_SIZE] = {0};
+uint8_t buf_rx[LOOPBACK_DATA_BUF_SIZE] = {0};
+uint8_t ret = 0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -261,14 +276,14 @@ void StartDefaultTask(void *argument)
 	  }
 	  if( Flag_CAN_1 ) {
 		  Flag_CAN_1 = 0;
-		  HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED_CAN1_RX_GPIO_Port, LED_CAN1_RX_Pin, GPIO_PIN_RESET);
 		  logI("CAN1 0x%08lX MSG: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X  %ld\n\r", RxHeader1.ExtId,
 			    RxData1[0], RxData1[1], RxData1[2], RxData1[3], RxData1[4], RxData1[5], RxData1[6], RxData1[7], HAL_GetTick());
 
 	  }
 	  if( Flag_CAN_2 ) {
 		  Flag_CAN_2 = 0;
-		  HAL_GPIO_WritePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_RESET);
 		  logI("CAN2 0x%08lX MSG: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X  %ld\n\r", RxHeader2.ExtId,
 			    RxData2[0], RxData2[1], RxData2[2], RxData2[3], RxData2[4], RxData2[5], RxData2[6], RxData2[7], HAL_GetTick());
 	  }
@@ -282,10 +297,12 @@ void StartDefaultTask(void *argument)
 		  timer_rs232 = HAL_GetTick();
 		  if(last_485 != ptr_485) {
 			  last_485 = ptr_485;
+			  HAL_GPIO_WritePin(LED_RS485_RX_GPIO_Port, LED_RS485_RX_Pin, GPIO_PIN_RESET);
 			  logI("RS485[%d]\n\r",	last_485 );
 		  }
 		  if(last_232 != ptr_232) {
 			  last_232 = ptr_232;
+			  HAL_GPIO_WritePin(LED_232_RX_GPIO_Port, LED_232_RX_Pin, GPIO_PIN_RESET);
 			  logI("RS232[%d]\n\r",	last_232 );
 		  }
 	  }
@@ -317,7 +334,6 @@ void StartTaskETH(void *argument)
 
 	wizchip_init(bufSize, bufSize);
 
-	wizchip_init(bufSize, bufSize);
 	wiz_NetInfo netInfo = { .mac 	= {0x00, 0x08, 0xdc, 0xab, 0xcd, 0xef},		// Mac address
 			                .ip 	= {192, 168, 10, 11},						// IP address
 			                .sn 	= {255, 255, 255, 0},						// Subnet mask
@@ -335,6 +351,12 @@ void StartTaskETH(void *argument)
   /* Infinite loop */
   for(;;)
   {
+		if((ret = loopback_tcps(0, buf_rx, 5001)) < 0)
+		{
+		    logI("%d:loopback_tcps error:%d\r\n", 0, ret);
+			break;
+		}
+
 	  // HTTP
 	  for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
 		  httpServer_run(i); 	// HTTP Server handler
@@ -389,6 +411,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	if(huart->Instance==USART6) {	// UART6
 		HAL_UART_Receive_IT(&huart6, (uint8_t *)byte_rs232, 1);
 	}
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+
 }
 /* USER CODE END Application */
 

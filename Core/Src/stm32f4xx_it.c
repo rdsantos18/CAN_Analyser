@@ -98,6 +98,7 @@ void NMI_Handler(void)
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
 
   /* USER CODE END NonMaskableInt_IRQn 0 */
+  HAL_RCC_NMI_IRQHandler();
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
    while (1)
   {
@@ -186,6 +187,20 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line4 interrupt.
+  */
+void EXTI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_IRQn 0 */
+
+  /* USER CODE END EXTI4_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(ETH_INT_Pin);
+  /* USER CODE BEGIN EXTI4_IRQn 1 */
+
+  /* USER CODE END EXTI4_IRQn 1 */
+}
+
+/**
   * @brief This function handles CAN1 RX0 interrupts.
   */
 void CAN1_RX0_IRQHandler(void)
@@ -255,6 +270,7 @@ void USART2_IRQHandler(void)
 	  ptr_485++;
 	  if(ptr_485 >= 1024) ptr_485 = 0;
 	  isRX2 = 0;
+	  HAL_GPIO_TogglePin(LED_RS485_RX_GPIO_Port, LED_RS485_RX_Pin);
 	  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
   }
   /* USER CODE END USART2_IRQn 0 */
@@ -404,6 +420,7 @@ void USART6_IRQHandler(void)
 	  ptr_232++;
 	  if(ptr_232 >= 1024) ptr_232 = 0;
 	  isRX3 = 0;
+	  HAL_GPIO_TogglePin(LED_232_RX_GPIO_Port, LED_232_RX_Pin);
 	  __HAL_UART_ENABLE_IT(&huart6, UART_IT_RXNE);
 	  }
   /* USER CODE END USART6_IRQn 0 */

@@ -52,10 +52,10 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, LED_CAN1_TX_Pin|LED_CAN1_RX_Pin|LED_CAN2_TX_Pin|LED_CAN2_RX_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, LED_RS485_RX_Pin|LED_CAN2_RX_Pin|LED_CAN1_RX_Pin|LED_CAN1_TX_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SPI_NSS_Pin|SPI1_NSS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SPI_NSS_GPIO_Port, SPI_NSS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(TX_485_EN_GPIO_Port, TX_485_EN_Pin, GPIO_PIN_RESET);
@@ -64,34 +64,40 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(ETH_RST_GPIO_Port, ETH_RST_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LED_485_TX_Pin|LED_485_RX_Pin|LED_INT_Pin|LED_232_TX_Pin
+  HAL_GPIO_WritePin(GPIOB, LED_CAN2_TX_Pin|LED_485_TX_Pin|LED_INT_Pin|LED_232_TX_Pin
                           |LED_232_RX_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PCPin PCPin */
-  GPIO_InitStruct.Pin = KEY_USER_Pin|INT_ETH_Pin;
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = KEY_USER_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(KEY_USER_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PCPin PCPin PCPin PCPin
                            PCPin */
-  GPIO_InitStruct.Pin = LED_CAN1_TX_Pin|LED_CAN1_RX_Pin|LED_CAN2_TX_Pin|LED_CAN2_RX_Pin
+  GPIO_InitStruct.Pin = LED_RS485_RX_Pin|LED_CAN2_RX_Pin|LED_CAN1_RX_Pin|LED_CAN1_TX_Pin
                           |ETH_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PAPin PAPin PAPin */
-  GPIO_InitStruct.Pin = SPI_NSS_Pin|TX_485_EN_Pin|SPI1_NSS_Pin;
+  /*Configure GPIO pins : PAPin PAPin */
+  GPIO_InitStruct.Pin = SPI_NSS_Pin|TX_485_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = ETH_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(ETH_INT_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pins : PBPin PBPin PBPin PBPin
                            PBPin */
-  GPIO_InitStruct.Pin = LED_485_TX_Pin|LED_485_RX_Pin|LED_INT_Pin|LED_232_TX_Pin
+  GPIO_InitStruct.Pin = LED_CAN2_TX_Pin|LED_485_TX_Pin|LED_INT_Pin|LED_232_TX_Pin
                           |LED_232_RX_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -103,6 +109,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(SD_DETECT_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 }
 

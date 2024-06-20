@@ -143,19 +143,19 @@ int main(void)
   MX_RNG_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-  logI("CAN ANALYSER STM32 FreeRTOS v1.0.0 19/06/2024\n\r");
+  logI("CAN ANALYSER STM32 FreeRTOS v1.0.0 20/06/2024\n\r");
 
   ptr_232 = 0;
   HAL_UART_Receive_IT(&huart6, (uint8_t *)byte_rs232, 1);
   ptr_485 = 0;
   HAL_UART_Receive_IT(&huart2, (uint8_t *)byte_rs485, 1);
 
-  //HAL_GPIO_WritePin(LED_CAN1_TX_GPIO_Port, LED_CAN1_TX_Pin, GPIO_PIN_SET);	// PC0
-  //HAL_GPIO_WritePin(LED_CAN1_RX_GPIO_Port, LED_CAN1_RX_Pin, GPIO_PIN_SET);	// PC1
-  //HAL_GPIO_WritePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin, GPIO_PIN_SET);	// PC2
-  //HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_SET);	// PC3
-  //HAL_GPIO_WritePin(LED_485_TX_GPIO_Port, LED_485_TX_Pin, GPIO_PIN_SET);      // PB0
-  //HAL_GPIO_WritePin(LED_485_RX_GPIO_Port, LED_485_RX_Pin, GPIO_PIN_SET);		// PB1
+  //HAL_GPIO_WritePin(LED_RS485_RX_GPIO_Port, LED_RS485_RX_Pin, GPIO_PIN_SET);	// PC0
+  //HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_SET);	// PC1
+  //HAL_GPIO_WritePin(LED_CAN1_RX_GPIO_Port, LED_CAN1_RX_Pin, GPIO_PIN_SET);	// PC2
+  //HAL_GPIO_WritePin(LED_CAN1_TX_GPIO_Port, LED_CAN1_TX_Pin, GPIO_PIN_SET);	// PC3
+  //HAL_GPIO_WritePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin, GPIO_PIN_SET);    // PB0
+  //HAL_GPIO_WritePin(LED_485_TX_GPIO_Port, LED_485_TX_Pin, GPIO_PIN_SET);		// PB1
 
   HAL_GPIO_WritePin(ETH_RST_GPIO_Port, ETH_RST_Pin, GPIO_PIN_RESET);
   HAL_Delay(10);
@@ -233,6 +233,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /* USER CODE BEGIN 4 */
@@ -301,7 +305,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 		if(HAL_Retval1 == HAL_OK) {
 			// Tem Dados Validos
 			Flag_CAN_1 = 1;
-			HAL_GPIO_TogglePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin);
+			HAL_GPIO_TogglePin(LED_CAN1_RX_GPIO_Port, LED_CAN1_RX_Pin);
 
 			TxHeader2.ExtId = RxHeader1.ExtId;
 			TxHeader2.RTR = CAN_RTR_DATA;
@@ -318,16 +322,18 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			TxData2[6] = RxData1[6];
 		    TxData2[7] = RxData1[7];
 		    // Start the Transmission process
+		    HAL_GPIO_TogglePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin);
 		    if (HAL_CAN_AddTxMessage(&hcan2, &TxHeader2, TxData2, &TxMailbox2) != HAL_OK)
 		    {
 				// Transmission request Error
 		    }
 		    else {
 		    }
+		    HAL_GPIO_WritePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin, GPIO_PIN_RESET);
 		}
 		else {
 			Flag_CAN_1 = 0;
-			HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LED_CAN1_RX_GPIO_Port, LED_CAN1_RX_Pin, GPIO_PIN_RESET);
 		}
 	}
 	else if(hcan->Instance == CAN2) {
@@ -335,7 +341,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 		if(HAL_Retval2 == HAL_OK) {
 			// Tem Dados Validos
 			Flag_CAN_2 = 1;
-			HAL_GPIO_TogglePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin);
+			HAL_GPIO_TogglePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin);
 
 			TxHeader1.ExtId = RxHeader2.ExtId;
 			TxHeader1.RTR = CAN_RTR_DATA;
@@ -352,16 +358,18 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			TxData1[6] = RxData2[6];
 		    TxData1[7] = RxData2[7];
 		    // Start the Transmission process
+		    HAL_GPIO_TogglePin(LED_CAN1_TX_GPIO_Port, LED_CAN1_TX_Pin);
 		    if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader1, TxData1, &TxMailbox1) != HAL_OK)
 		    {
 				// Transmission request Error
 		    }
 		    else {
 		    }
+		    HAL_GPIO_WritePin(LED_CAN1_TX_GPIO_Port, LED_CAN1_TX_Pin, GPIO_PIN_RESET);
 		}
 		else {
 			Flag_CAN_2 = 0;
-			HAL_GPIO_WritePin(LED_CAN2_TX_GPIO_Port, LED_CAN2_TX_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(LED_CAN2_RX_GPIO_Port, LED_CAN2_RX_Pin, GPIO_PIN_RESET);
 		}
 	}
 }
