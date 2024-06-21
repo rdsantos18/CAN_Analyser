@@ -41,7 +41,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define LOOPBACK_DATA_BUF_SIZE			1024
+#define LOOPBACK_DATA_BUF_SIZE			2048
 
 
 int32_t server_tcp(uint8_t sn);
@@ -81,11 +81,11 @@ uint32_t size = 0;
 unsigned int ByteRead;
 volatile unsigned long ulHighFrequencyTimerTicks = 0;
 
-uint8_t rcvBuf[200] = {0}, sendBuf[200] = {0};
-uint8_t	bufSize[] = {2, 2, 2, 2, 2, 2, 2, 2};
+uint8_t	bufSize[] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 uint8_t WEBRX_BUF[2048] = {0};
 uint8_t WEBTX_BUF[2048] = {0};
 uint8_t socknumlist[] = {2, 3};
+static uint8_t dest_ip[4] = {192, 168, 10, 13};
 
 uint16_t last_232 = 0;
 uint16_t last_485 = 0;
@@ -312,7 +312,7 @@ void StartDefaultTask(void *argument)
 	  else {
 		  //logI("Cable USB Not Connected\n\r");
 	  }
-    osDelay(1);
+    osDelay(2);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -351,17 +351,20 @@ void StartTaskETH(void *argument)
   /* Infinite loop */
   for(;;)
   {
-		if((ret = loopback_tcps(0, buf_rx, 5001)) < 0)
-		{
+		if((ret = loopback_tcps(0, buf_rx, 5001)) < 0) {
 		    logI("%d:loopback_tcps error:%d\r\n", 0, ret);
 			break;
 		}
+//		if((ret = loopback_tcpc(0, buf_rx, dest_ip, 5001)) < 0) {
+//		    logI("%d:loopback_tcpc error:%d\r\n", 0, ret);
+//			break;
+//		}
 
 	  // HTTP
 	  for(uint8_t i = 0; i < MAX_HTTPSOCK; i++)	{
 		  httpServer_run(i); 	// HTTP Server handler
 	  }
-    osDelay(1);
+    osDelay(2);
   }
   /* USER CODE END StartTaskETH */
 }

@@ -143,7 +143,7 @@ int main(void)
   MX_RNG_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-  logI("CAN ANALYSER STM32 FreeRTOS v1.0.0 20/06/2024\n\r");
+  logI("CAN ANALYSER STM32 FreeRTOS v1.0.0 21/06/2024\n\r");
 
   ptr_232 = 0;
   HAL_UART_Receive_IT(&huart6, (uint8_t *)byte_rs232, 1);
